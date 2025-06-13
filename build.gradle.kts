@@ -1,21 +1,18 @@
 plugins {
-    kotlin("jvm") version "2.1.20"
+    alias(libs.plugins.kotlinJvm)
+    alias(libs.plugins.springFrameworkBoot)
+    alias(libs.plugins.springDependencyManagement)
+    alias(libs.plugins.kotlinSpring)
 }
 
-group = "ru.pyroman"
+group = "ru.pyroman.masik"
 version = "1.0-SNAPSHOT"
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
-    testImplementation(kotlin("test"))
+    implementation(libs.springFrameworkBoot.starterWeb)
+    implementation(libs.springFrameworkBoot.starterWebFlux)
 }
 
-tasks.test {
-    useJUnitPlatform()
-}
 kotlin {
     jvmToolchain(21)
 }
