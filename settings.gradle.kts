@@ -2,6 +2,8 @@ rootProject.name = "MasikServer"
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
+include(":feature:post-feature")
+
 pluginManagement {
     repositories {
         mavenCentral()

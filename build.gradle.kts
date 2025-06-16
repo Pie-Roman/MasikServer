@@ -11,6 +11,8 @@ version = "1.0-SNAPSHOT"
 dependencies {
     implementation(libs.springFrameworkBoot.starterWeb)
     implementation(libs.springFrameworkBoot.starterWebFlux)
+
+    implementation(projects.feature.postFeature)
 }
 
 kotlin {
