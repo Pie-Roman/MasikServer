@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.kotlinJvm)
-    alias(libs.plugins.springFrameworkBoot)
     alias(libs.plugins.springDependencyManagement)
     alias(libs.plugins.kotlinSpring)
 }

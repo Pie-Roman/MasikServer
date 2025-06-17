@@ -6,8 +6,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 
 @SpringBootApplication
 @EnableJpaRepositories
-class NewsApplication
+class MasikApplication
 
 fun main(args: Array<String>) {
-    runApplication<NewsApplication>(*args)
+    runApplication<MasikApplication>(*args)
 }
