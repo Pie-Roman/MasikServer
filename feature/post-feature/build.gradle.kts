@@ -5,18 +5,12 @@ plugins {
     alias(libs.plugins.kotlinSpring)
 }
 
-group = "ru.pyroman.masik"
-version = "1.0-SNAPSHOT"
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
 
 dependencies {
     implementation(libs.springFrameworkBoot.starterWeb)
     implementation(libs.springFrameworkBoot.starterWebFlux)
-    implementation(libs.springFrameworkBoot.starterDataJpa)
-
-    implementation(projects.feature.postFeature)
-    implementation(projects.feature.noteFeature)
-}
-
-kotlin {
-    jvmToolchain(21)
 }

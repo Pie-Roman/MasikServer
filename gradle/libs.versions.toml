@@ -4,9 +4,16 @@ kotlin = "2.1.20"
 spring = "1.1.2"
 springFrameworkBoot = "3.4.5"
 
+
+
 [libraries]
 springFrameworkBoot-starterWeb = { group = "org.springframework.boot", name = "spring-boot-starter-web", version.ref = "springFrameworkBoot" }
 springFrameworkBoot-starterWebFlux = { group = "org.springframework.boot", name = "spring-boot-starter-webflux", version.ref = "springFrameworkBoot" }
+springFrameworkBoot-starterDataJpa = { group = "org.springframework.boot", name = "spring-boot-starter-data-jpa", version.ref = "springFrameworkBoot" }
+
+postgresql = { group = "org.postgresql", name = "postgresql" }
+
+jackson-module = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin" }
 
 [plugins]
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

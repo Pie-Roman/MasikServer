@@ -2,7 +2,12 @@ rootProject.name = "MasikServer"
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
+include(":domain:note-domain")
+
+include(":data:note-data")
+
 include(":feature:post-feature")
+include(":feature:note-feature")
 
 pluginManagement {
     repositories {
