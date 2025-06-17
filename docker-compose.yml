@@ -1,16 +1,38 @@
+version: '3.8'
+
 services:
-  postgres:
-    image: postgres:15
+  db:
+    image: postgres:16
     container_name: masik-postgres
+    restart: unless-stopped
     environment:
-      - POSTGRES_DB=masikdb
-      - POSTGRES_USER=masik
-      - POSTGRES_PASSWORD=masikk
+      POSTGRES_DB: masikdb
+      POSTGRES_USER: masik
+      POSTGRES_PASSWORD: masikk
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+
+  masikserver:
+    build: .
+    container_name: masik-server
     restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      # Настройка подключения к PostgreSQL внутри Docker-сети
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_NAME: masikdb
+      DATABASE_USER: masik
+      DATABASE_PASSWORD: masikk
+      # Дополнительно:
+      # APP_ENV: production
+      # SECRET_KEY: your-secret-key
+    ports:
+      - "8080:8080" # Укажите порт приложения, если отличается
 
 volumes:
   postgres_data:
