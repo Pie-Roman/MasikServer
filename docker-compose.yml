@@ -2,7 +2,6 @@ services:
   db:
     image: postgres:15
     container_name: masik-postgres
-    restart: unless-stopped
     environment:
       POSTGRES_DB: masikdb
       POSTGRES_USER: masik
@@ -16,21 +15,15 @@ services:
   masikserver:
     build: .
     container_name: masik-server
-    restart: unless-stopped
     depends_on:
       - db
     environment:
-      # Настройка подключения к PostgreSQL внутри Docker-сети
-      DATABASE_HOST: db
-      DATABASE_PORT: 5432
-      DATABASE_NAME: masikdb
-      DATABASE_USER: masik
-      DATABASE_PASSWORD: masikk
-      # Дополнительно:
-      # APP_ENV: production
-      # SECRET_KEY: your-secret-key
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://masik-postgres:5432/masikdb
+      - SPRING_DATASOURCE_USERNAME=masik
+      - SPRING_DATASOURCE_PASSWORD=masikk
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
     ports:
-      - "8080:8080" # Укажите порт приложения, если отличается
+      - "8080:8080"
 
 volumes:
   postgres_data:
