@@ -61,19 +61,21 @@ jobs:
             fi
 
             # Запуск dockerd, если демон не работает
-            if ! docker info > /dev/null 2>&1; then
+            if ! sudo docker info > /dev/null 2>&1; then
               echo "Starting Docker daemon..."
               sudo nohup dockerd > /dev/null 2>&1 &
               for i in {1..10}; do
                 sleep 2
-                if docker info > /dev/null 2>&1; then
+                if sudo docker info > /dev/null 2>&1; then
                   echo "Docker started"
                   break
                 fi
               done
             fi
 
-            docker-compose down || true
-            docker-compose pull || true
-            docker-compose up -d
+            # Работа с docker-compose через sudo
+            sudo docker-compose down || true
+            sudo docker-compose pull || true
+            sudo docker-compose up -d
           EOF
+
