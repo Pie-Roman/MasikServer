@@ -22,26 +22,29 @@ jobs:
       - name: Build project
         run: ./gradlew build
 
-      - name: Set up SSH key
+      - name: Prepare SSH keys
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/deploy_key
+          echo "${{ secrets.SERVER_SSH_CERT }}" > ~/.ssh/deploy_key-cert.pub
           chmod 600 ~/.ssh/deploy_key
+          chmod 644 ~/.ssh/deploy_key-cert.pub
+          ssh-keyscan -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Upload JAR to server
+      - name: Copy jar to server
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} \
-            "mkdir -p ~/MasikServer"
-
-          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -P ${{ secrets.SERVER_PORT }} \
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            -P ${{ secrets.SERVER_PORT }} \
             build/libs/masik.jar \
             ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:~/MasikServer/
 
-      - name: Restart Docker Compose
+      - name: SSH into server and restart docker-compose
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            cd ~/MasikServer
-            docker-compose down
-            docker-compose pull
-            docker-compose up -d
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            -p ${{ secrets.SERVER_PORT }} \
+            ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} << 'EOF'
+              cd ~/MasikServer
+              docker-compose down
+              docker-compose pull
+              docker-compose up -d
           EOF
