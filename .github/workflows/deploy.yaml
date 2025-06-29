@@ -22,7 +22,7 @@ jobs:
       - name: Build project
         run: ./gradlew build
 
-      - name: Prepare SSH key
+      - name: Prepare SSH keys
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/deploy_key
@@ -36,28 +36,28 @@ jobs:
             ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} \
             "mkdir -p ~/MasikServer"
 
-      - name: Copy JAR to server
+      - name: Copy jar and docker-compose.yml to server
         run: |
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             -P ${{ secrets.SERVER_PORT }} \
             build/libs/masik.jar \
+            docker-compose.yml \
             ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:~/MasikServer/
 
-      - name: SSH into server, install docker-compose if missing, and restart containers
+      - name: SSH into server, install docker-compose if needed and restart containers
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             -p ${{ secrets.SERVER_PORT }} \
             ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} << 'EOF'
+              mkdir -p ~/MasikServer
+              cd ~/MasikServer
+              
               if ! command -v docker-compose &> /dev/null; then
                 echo "docker-compose not found, installing..."
                 sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
                 sudo chmod +x /usr/local/bin/docker-compose
-                docker-compose --version
-              else
-                echo "docker-compose found."
               fi
 
-              cd ~/MasikServer
               docker-compose down
               docker-compose pull
               docker-compose up -d
