@@ -1,4 +1,4 @@
-name: Deploy to Server
+name: Deploy to Server (manual SSH)
 
 on:
   push:
@@ -22,26 +22,26 @@ jobs:
       - name: Build project
         run: ./gradlew build
 
-      - name: SCP jar to server
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          port: ${{ secrets.SERVER_PORT }}
-          username: pyromann
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          source: 'build/libs/masik.jar'
-          target: '~/MasikServer'
-          debug: true
+      - name: Prepare SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+      - name: Copy JAR to server
+        run: |
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+              -P ${{ secrets.SERVER_PORT }} \
+              build/libs/masik.jar \
+              ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:~/MasikServer/
 
       - name: SSH into server and restart docker-compose
-        uses: appleboy/ssh-action@v0.1.4
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          port: ${{ secrets.SERVER_PORT }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            cd ~/MasikServer
-            docker-compose down
-            docker-compose pull
-            docker-compose up -d
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+              -p ${{ secrets.SERVER_PORT }} \
+              ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} << 'EOF'
+                cd ~/MasikServer
+                docker-compose down
+                docker-compose pull
+                docker-compose up -d
+          EOF
