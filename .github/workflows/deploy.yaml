@@ -13,15 +13,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up JDK
-        uses: actions/setup-java@v3
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-
-      - name: Build project
-        run: ./gradlew build
-
       - name: Prepare SSH keys
         run: |
           mkdir -p ~/.ssh
@@ -29,22 +20,33 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Copy jar to server
-        run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT }} \
-            ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} "mkdir -p ~/MasikServer"
-          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-            -P ${{ secrets.SERVER_PORT }} \
-            build/libs/masik.jar \
-            ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:~/MasikServer/
+          # Deploy key для доступа к репозиторию (если он приватный)
+          echo "${{ secrets.REPO_DEPLOY_KEY }}" > ~/.ssh/repo_key
+          chmod 600 ~/.ssh/repo_key
 
-      - name: SSH into server and restart docker-compose
+      - name: SSH into server and deploy
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             -p ${{ secrets.SERVER_PORT }} \
             ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} << 'EOF'
             set -e
-            cd ~/MasikServer
+
+            # Настройка SSH для git (если репозиторий приватный)
+            mkdir -p ~/.ssh
+            echo "${{ secrets.REPO_DEPLOY_KEY }}" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+            # Клонирование или обновление репозитория
+            cd ~
+            if [ ! -d MasikServer ]; then
+              GIT_SSH_COMMAND="ssh -i ~/.ssh/id_rsa" git clone git@github.com:Pie-Roman/MasikServer.git MasikServer
+            else
+              cd MasikServer
+              GIT_SSH_COMMAND="ssh -i ~/.ssh/id_rsa" git pull origin main
+            fi
+
+            cd MasikServer
 
             # Установка Docker если отсутствует
             if ! command -v docker > /dev/null 2>&1; then
@@ -60,7 +62,7 @@ jobs:
               sudo chmod +x /usr/local/bin/docker-compose
             fi
 
-            # Запуск dockerd, если демон не работает
+            # Запуск dockerd, если демон не активен
             if ! sudo docker info > /dev/null 2>&1; then
               echo "Starting Docker daemon..."
               sudo nohup dockerd > /dev/null 2>&1 &
@@ -73,9 +75,8 @@ jobs:
               done
             fi
 
-            # Работа с docker-compose через sudo
+            # Docker Compose restart
             sudo docker-compose down || true
             sudo docker-compose pull || true
             sudo docker-compose up -d
           EOF
-
