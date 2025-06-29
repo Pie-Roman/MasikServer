@@ -22,16 +22,21 @@ jobs:
       - name: Build project
         run: ./gradlew build
 
-      - name: Prepare SSH keys
+      - name: Prepare SSH key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/deploy_key
-          echo "${{ secrets.SERVER_SSH_CERT }}" > ~/.ssh/deploy_key-cert.pub
           chmod 600 ~/.ssh/deploy_key
-          chmod 644 ~/.ssh/deploy_key-cert.pub
           ssh-keyscan -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Copy jar to server
+      - name: Ensure remote directory exists
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            -p ${{ secrets.SERVER_PORT }} \
+            ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} \
+            "mkdir -p ~/MasikServer"
+
+      - name: Copy JAR to server
         run: |
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             -P ${{ secrets.SERVER_PORT }} \
