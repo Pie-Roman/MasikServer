@@ -43,11 +43,20 @@ jobs:
             build/libs/masik.jar \
             ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:~/MasikServer/
 
-      - name: SSH into server and restart docker-compose
+      - name: SSH into server, install docker-compose if missing, and restart containers
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             -p ${{ secrets.SERVER_PORT }} \
             ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} << 'EOF'
+              if ! command -v docker-compose &> /dev/null; then
+                echo "docker-compose not found, installing..."
+                sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                sudo chmod +x /usr/local/bin/docker-compose
+                docker-compose --version
+              else
+                echo "docker-compose found."
+              fi
+
               cd ~/MasikServer
               docker-compose down
               docker-compose pull
