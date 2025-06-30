@@ -36,20 +36,20 @@ jobs:
             ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} << 'EOF'
             set -e
 
-            # Настройка SSH для доступа к GitHub
+            # Настройка SSH для git (если репозиторий приватный)
             mkdir -p ~/.ssh
             chmod 600 ~/.ssh/repo_key
-            eval "\$(ssh-agent -s)"
-            ssh-add ~/.ssh/repo_key
             ssh-keyscan github.com >> ~/.ssh/known_hosts
-
+            
             # Клонирование или обновление репозитория
             cd ~
             if [ ! -d MasikServer ]; then
-              GIT_SSH_COMMAND="ssh -i ~/.ssh/repo_key" git clone git@github.com:Pie-Roman/MasikServer.git MasikServer
+              GIT_SSH_COMMAND="ssh -i ~/.ssh/repo_key -o StrictHostKeyChecking=no" \
+                git clone git@github.com:Pie-Roman/MasikServer.git MasikServer
             else
               cd MasikServer
-              GIT_SSH_COMMAND="ssh -i ~/.ssh/repo_key" git pull origin main
+              GIT_SSH_COMMAND="ssh -i ~/.ssh/repo_key -o StrictHostKeyChecking=no" \
+                git pull origin main
             fi
 
             cd ~/MasikServer
