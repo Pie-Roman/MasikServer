@@ -23,6 +23,13 @@ jobs:
           # Deploy key для доступа к репозиторию (если он приватный)
           echo "${{ secrets.REPO_DEPLOY_KEY }}" > ~/.ssh/repo_key
           chmod 600 ~/.ssh/repo_key
+          
+      - name: Copy REPO_DEPLOY_KEY to server
+        run: |
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            -P ${{ secrets.SERVER_PORT }} \
+            <<< "${{ secrets.REPO_DEPLOY_KEY }}" \
+            ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:~/.ssh/repo_key
 
       - name: SSH into server and deploy
         run: |
@@ -33,8 +40,9 @@ jobs:
 
             # Настройка SSH для git (если репозиторий приватный)
             mkdir -p ~/.ssh
-            echo "${{ secrets.REPO_DEPLOY_KEY }}" > ~/.ssh/id_rsa
-            chmod 600 ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/repo_key
+            eval "$(ssh-agent -s)"
+            ssh-add ~/.ssh/repo_key
             ssh-keyscan github.com >> ~/.ssh/known_hosts
 
             # Клонирование или обновление репозитория
