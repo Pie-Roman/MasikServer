@@ -20,15 +20,13 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-          # Deploy key для доступа к репозиторию (если он приватный)
-          echo "${{ secrets.REPO_DEPLOY_KEY }}" > ~/.ssh/repo_key
-          chmod 600 ~/.ssh/repo_key
-          
       - name: Copy REPO_DEPLOY_KEY to server
         run: |
+          echo "${{ secrets.REPO_DEPLOY_KEY }}" > repo_key_temp
+          chmod 600 repo_key_temp
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             -P ${{ secrets.SERVER_PORT }} \
-            <<< "${{ secrets.REPO_DEPLOY_KEY }}" \
+            repo_key_temp \
             ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:~/.ssh/repo_key
 
       - name: SSH into server and deploy
@@ -38,39 +36,39 @@ jobs:
             ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} << 'EOF'
             set -e
 
-            # Настройка SSH для git (если репозиторий приватный)
+            # Настройка SSH для доступа к GitHub
             mkdir -p ~/.ssh
             chmod 600 ~/.ssh/repo_key
-            eval "$(ssh-agent -s)"
+            eval "\$(ssh-agent -s)"
             ssh-add ~/.ssh/repo_key
             ssh-keyscan github.com >> ~/.ssh/known_hosts
 
             # Клонирование или обновление репозитория
             cd ~
             if [ ! -d MasikServer ]; then
-              GIT_SSH_COMMAND="ssh -i ~/.ssh/id_rsa" git clone git@github.com:Pie-Roman/MasikServer.git MasikServer
+              GIT_SSH_COMMAND="ssh -i ~/.ssh/repo_key" git clone git@github.com:Pie-Roman/MasikServer.git MasikServer
             else
               cd MasikServer
-              GIT_SSH_COMMAND="ssh -i ~/.ssh/id_rsa" git pull origin main
+              GIT_SSH_COMMAND="ssh -i ~/.ssh/repo_key" git pull origin main
             fi
 
-            cd MasikServer
+            cd ~/MasikServer
 
-            # Установка Docker если отсутствует
+            # Установка Docker если не установлен
             if ! command -v docker > /dev/null 2>&1; then
               echo "Installing Docker..."
               curl -fsSL https://get.docker.com -o get-docker.sh
               sudo sh get-docker.sh
             fi
 
-            # Установка Docker Compose если отсутствует
+            # Установка Docker Compose если не установлен
             if ! command -v docker-compose > /dev/null 2>&1; then
               echo "Installing Docker Compose..."
               sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
               sudo chmod +x /usr/local/bin/docker-compose
             fi
 
-            # Запуск dockerd, если демон не активен
+            # Запуск Docker демона, если не запущен
             if ! sudo docker info > /dev/null 2>&1; then
               echo "Starting Docker daemon..."
               sudo nohup dockerd > /dev/null 2>&1 &
@@ -83,7 +81,8 @@ jobs:
               done
             fi
 
-            # Docker Compose restart
+            # Рестарт контейнеров
+            cd ~/MasikServer
             sudo docker-compose down || true
             sudo docker-compose pull || true
             sudo docker-compose up -d
