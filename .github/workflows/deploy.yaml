@@ -67,6 +67,12 @@ jobs:
             fi
           EOF
 
+      - name: Ensure JAR destination directory exists
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT }} \
+            ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} \
+            'mkdir -p ~/MasikServer/build/libs'
+
       - name: Copy JAR to server
         run: |
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -P ${{ secrets.SERVER_PORT }} \
