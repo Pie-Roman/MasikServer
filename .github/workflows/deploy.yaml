@@ -71,7 +71,7 @@ jobs:
         run: |
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -P ${{ secrets.SERVER_PORT }} \
             build/libs/masik.jar \
-            ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:~/MasikServer/masik.jar
+            ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:~/MasikServer/build/libs/masik.jar
 
       - name: SSH into server and run Docker
         run: |
