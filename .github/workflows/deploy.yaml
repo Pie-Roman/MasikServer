@@ -37,81 +37,80 @@ jobs:
             -P ${{ secrets.SERVER_PORT }} \
             repo_key_temp \
             ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:~/.ssh/repo_key
+          rm -f repo_key_temp
 
-      - name: SSH into server and pull repo
-        run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-            -p ${{ secrets.SERVER_PORT }} \
-            ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            set -e
-
-            # Настройка SSH и клонирование/обновление репозитория
-            mkdir -p ~/.ssh
-            chmod 600 ~/.ssh/repo_key
-            ssh-keyscan github.com >> ~/.ssh/known_hosts
-            
-            cd ~
-            
-            # Удаляем старую папку, если она сломана
-            if [ -d MasikServer ] && [ ! -d MasikServer/.git ]; then
-              rm -rf MasikServer
-            fi
-            
-            if [ ! -d MasikServer ]; then
-              GIT_SSH_COMMAND="ssh -i ~/.ssh/repo_key -o StrictHostKeyChecking=no" \
-                git clone git@github.com:Pie-Roman/MasikServer.git
-            else
-              cd MasikServer
-              GIT_SSH_COMMAND="ssh -i ~/.ssh/repo_key -o StrictHostKeyChecking=no" \
-                git pull origin main
-            fi
-          EOF
-
-      - name: Ensure JAR destination directory exists
-        run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT }} \
-            ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} \
-            'mkdir -p ~/MasikServer/build/libs'
-
-      - name: Copy JAR to server
+      - name: Copy JAR to server temporary location
         run: |
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -P ${{ secrets.SERVER_PORT }} \
             build/libs/masik.jar \
-            ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:~/MasikServer/build/libs/masik.jar
+            ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:/tmp/masik.jar
 
-      - name: SSH into server and run Docker
+      - name: SSH into server and deploy
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT }} \
             ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} << 'EOF'
             set -e
 
+            echo "🔑 Настройка SSH..."
+            mkdir -p ~/.ssh
+            chmod 600 ~/.ssh/repo_key
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+            cd ~
+
+            echo "📦 Проверка и клонирование репозитория..."
+            if [ -d MasikServer ] && [ ! -d MasikServer/.git ]; then
+              echo "⚠️ Сломанная папка — удаляю MasikServer"
+              rm -rf MasikServer
+            fi
+
+            if [ ! -d MasikServer ]; then
+              echo "📥 Клонирую репозиторий..."
+              GIT_SSH_COMMAND="ssh -i ~/.ssh/repo_key -o StrictHostKeyChecking=no" \
+                git clone git@github.com:Pie-Roman/MasikServer.git
+            else
+              echo "🔄 Пулл репозитория..."
+              cd MasikServer
+              GIT_SSH_COMMAND="ssh -i ~/.ssh/repo_key -o StrictHostKeyChecking=no" \
+                git pull origin main
+              cd ..
+            fi
+
+            echo "📁 Перемещаю jar-файл..."
+            mkdir -p ~/MasikServer/build/libs
+            mv /tmp/masik.jar ~/MasikServer/build/libs/masik.jar
+
             cd ~/MasikServer
 
+            echo "🐳 Проверка Docker..."
             if ! command -v docker > /dev/null 2>&1; then
-              echo "Installing Docker..."
+              echo "📦 Установка Docker..."
               curl -fsSL https://get.docker.com -o get-docker.sh
               sudo sh get-docker.sh
             fi
 
             if ! command -v docker-compose > /dev/null 2>&1; then
-              echo "Installing Docker Compose..."
-              sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              echo "📦 Установка Docker Compose..."
+              sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" \
+                -o /usr/local/bin/docker-compose
               sudo chmod +x /usr/local/bin/docker-compose
             fi
 
             if ! sudo docker info > /dev/null 2>&1; then
-              echo "Starting Docker daemon..."
+              echo "🚀 Запуск Docker daemon..."
               sudo nohup dockerd > /dev/null 2>&1 &
               for i in {1..10}; do
                 sleep 2
                 if sudo docker info > /dev/null 2>&1; then
-                  echo "Docker started"
+                  echo "✅ Docker готов"
                   break
                 fi
               done
             fi
 
+            echo "📦 Docker Compose: пересобираю и перезапускаю контейнеры..."
             sudo docker-compose down || true
-            sudo docker-compose pull || true
-            sudo docker-compose up -d
+            sudo docker-compose up -d --build
+
+            echo "🎉 Деплой завершён"
           EOF
