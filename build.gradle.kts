@@ -15,7 +15,6 @@ dependencies {
     implementation(libs.springFrameworkBoot.starterWebFlux)
     implementation(libs.springFrameworkBoot.starterDataJpa)
 
-    implementation(projects.feature.postFeature)
     implementation(projects.feature.noteFeature)
 }
 
