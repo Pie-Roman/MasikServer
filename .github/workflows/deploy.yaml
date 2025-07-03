@@ -13,6 +13,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build project
+        run: ./gradlew build
+
       - name: Prepare SSH keys
         run: |
           mkdir -p ~/.ssh
@@ -20,63 +29,88 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-          # Deploy key для доступа к репозиторию (если он приватный)
-          echo "${{ secrets.REPO_DEPLOY_KEY }}" > ~/.ssh/repo_key
-          chmod 600 ~/.ssh/repo_key
+      - name: Copy REPO_DEPLOY_KEY to server
+        run: |
+          echo "${{ secrets.REPO_DEPLOY_KEY }}" > repo_key_temp
+          chmod 600 repo_key_temp
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            -P ${{ secrets.SERVER_PORT }} \
+            repo_key_temp \
+            ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:~/.ssh/repo_key
+          rm -f repo_key_temp
+
+      - name: Copy JAR to server temporary location
+        run: |
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -P ${{ secrets.SERVER_PORT }} \
+            build/libs/masik.jar \
+            ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:/tmp/masik.jar
 
       - name: SSH into server and deploy
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-            -p ${{ secrets.SERVER_PORT }} \
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT }} \
             ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} << 'EOF'
             set -e
 
-            # Настройка SSH для git (если репозиторий приватный)
+            echo "🔑 Настройка SSH..."
             mkdir -p ~/.ssh
-            echo "${{ secrets.REPO_DEPLOY_KEY }}" > ~/.ssh/id_rsa
-            chmod 600 ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/repo_key
             ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-            # Клонирование или обновление репозитория
             cd ~
-            if [ ! -d MasikServer ]; then
-              GIT_SSH_COMMAND="ssh -i ~/.ssh/id_rsa" git clone git@github.com:Pie-Roman/MasikServer.git MasikServer
-            else
-              cd MasikServer
-              GIT_SSH_COMMAND="ssh -i ~/.ssh/id_rsa" git pull origin main
+
+            echo "📦 Проверка и клонирование репозитория..."
+            if [ -d MasikServer ] && [ ! -d MasikServer/.git ]; then
+              echo "⚠️ Сломанная папка — удаляю MasikServer"
+              rm -rf MasikServer
             fi
 
-            cd MasikServer
+            if [ ! -d MasikServer ]; then
+              echo "📥 Клонирую репозиторий..."
+              GIT_SSH_COMMAND="ssh -i ~/.ssh/repo_key -o StrictHostKeyChecking=no" \
+                git clone git@github.com:Pie-Roman/MasikServer.git
+            else
+              echo "🔄 Пулл репозитория..."
+              cd MasikServer
+              GIT_SSH_COMMAND="ssh -i ~/.ssh/repo_key -o StrictHostKeyChecking=no" \
+                git pull origin main
+              cd ..
+            fi
 
-            # Установка Docker если отсутствует
+            echo "📁 Перемещаю jar-файл..."
+            mkdir -p ~/MasikServer/build/libs
+            mv /tmp/masik.jar ~/MasikServer/build/libs/masik.jar
+
+            cd ~/MasikServer
+
+            echo "🐳 Проверка Docker..."
             if ! command -v docker > /dev/null 2>&1; then
-              echo "Installing Docker..."
+              echo "📦 Установка Docker..."
               curl -fsSL https://get.docker.com -o get-docker.sh
               sudo sh get-docker.sh
             fi
 
-            # Установка Docker Compose если отсутствует
             if ! command -v docker-compose > /dev/null 2>&1; then
-              echo "Installing Docker Compose..."
-              sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              echo "📦 Установка Docker Compose..."
+              sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" \
+                -o /usr/local/bin/docker-compose
               sudo chmod +x /usr/local/bin/docker-compose
             fi
 
-            # Запуск dockerd, если демон не активен
             if ! sudo docker info > /dev/null 2>&1; then
-              echo "Starting Docker daemon..."
+              echo "🚀 Запуск Docker daemon..."
               sudo nohup dockerd > /dev/null 2>&1 &
               for i in {1..10}; do
                 sleep 2
                 if sudo docker info > /dev/null 2>&1; then
-                  echo "Docker started"
+                  echo "✅ Docker готов"
                   break
                 fi
               done
             fi
 
-            # Docker Compose restart
+            echo "📦 Docker Compose: пересобираю и перезапускаю контейнеры..."
             sudo docker-compose down || true
-            sudo docker-compose pull || true
-            sudo docker-compose up -d
+            sudo docker-compose up -d --build
+
+            echo "🎉 Деплой завершён"
           EOF
