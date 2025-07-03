@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import ru.pyroman.masik.data.note.network.dto.NoteBodyNetworkDto
@@ -46,16 +45,13 @@ class NoteController(
     }
 
     @PatchMapping("/{id}")
-    fun updateIsDone(
+    fun updateNote(
         @PathVariable id: String,
-        @RequestParam isDone: Boolean
+        @RequestBody body: NoteBodyNetworkDto,
     ): NoteNetworkDto {
-        val dto = NoteBodyNetworkDto(
-            isDone = isDone,
-        )
         return noteRepository.update(
             id = id,
-            bodyNetworkDto = dto,
+            bodyNetworkDto = body,
         )
     }
 }
