@@ -10,7 +10,7 @@ import ru.pyroman.masik.data.note.network.mapper.NoteBodyNetworkMapper
 import ru.pyroman.masik.data.note.network.mapper.NoteNetworkMapper
 import ru.pyroman.masik.domain.note.model.Note
 import java.time.LocalDateTime
-import java.util.UUID
+import java.util.*
 import kotlin.jvm.optionals.getOrNull
 
 @Repository
@@ -19,6 +19,7 @@ class NoteRepository(
     private val noteCacheMapper: NoteCacheMapper,
     private val noteNetworkMapper: NoteNetworkMapper,
     private val noteBodyNetworkMapper: NoteBodyNetworkMapper,
+    private val noteTagRepository: NoteTagRepository,
 ) {
 
     fun findAll(): NoteListNetworkDto {
@@ -28,8 +29,23 @@ class NoteRepository(
         val itemsNetworkDto = items.map { model ->
             noteNetworkMapper.map(model)
         }
+        val tags = noteTagRepository.findAll()
         return NoteListNetworkDto(
             items = itemsNetworkDto,
+            tags = tags,
+        )
+    }
+
+    fun findAllByTagName(tagName: String): NoteListNetworkDto {
+        val items = noteCacheRepository.findAllByTagName(tagName).map { dto ->
+            noteCacheMapper.map(dto)
+        }
+        val itemsNetworkDto = items.map { model ->
+            noteNetworkMapper.map(model)
+        }
+        return NoteListNetworkDto(
+            items = itemsNetworkDto,
+            tags = null,
         )
     }
 

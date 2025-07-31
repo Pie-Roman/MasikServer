@@ -6,12 +6,21 @@ import ru.pyroman.masik.domain.note.model.Note
 import ru.pyroman.masik.domain.note.model.NoteBody
 
 @Component
-class NoteCacheMapper {
+class NoteCacheMapper(
+    private val tagCacheMapper: NoteTagCacheMapper,
+) {
 
     fun map(dto: NoteCacheDto): Note {
+        val tags = dto.tags
+            .asSequence()
+            .map { tag ->
+                tagCacheMapper.map(tag)
+            }
+            .toSet()
         val body = NoteBody(
             title = dto.title,
             isDone = dto.isDone,
+            tags = tags,
         )
         return Note(
             id = dto.id,
@@ -21,11 +30,19 @@ class NoteCacheMapper {
     }
 
     fun map(model: Note): NoteCacheDto {
+        val tags = model.body.tags
+            .asSequence()
+            .map { tag ->
+                tagCacheMapper.map(tag)
+            }
+            .toSet()
+
         return NoteCacheDto(
             id = model.id,
             title = model.body.title,
             isDone = model.body.isDone,
             dateCreated = model.dateCreated,
+            tags = tags,
         )
     }
 }
