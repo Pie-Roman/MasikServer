@@ -11,10 +11,10 @@ import jakarta.persistence.Table
 @Table(name = "tags")
 data class NoteTagCacheDto(
     @Id
-    val name: String,
+    val name: String = "",
 
     @Column(nullable = false)
-    val color: String,
+    val color: String = "",
 
     @ManyToMany(mappedBy = "tags", fetch = FetchType.LAZY)
     val notes: Set<NoteCacheDto> = emptySet()
