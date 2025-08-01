@@ -17,5 +17,5 @@ data class NoteTagCacheDto(
     val color: String = "",
 
     @ManyToMany(mappedBy = "tags", fetch = FetchType.LAZY)
-    val notes: Set<NoteCacheDto> = emptySet()
+    val notes: List<NoteCacheDto> = emptyList()
 )

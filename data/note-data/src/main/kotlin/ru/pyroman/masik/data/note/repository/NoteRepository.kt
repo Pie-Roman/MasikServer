@@ -8,6 +8,7 @@ import ru.pyroman.masik.data.note.network.dto.NoteListNetworkDto
 import ru.pyroman.masik.data.note.network.dto.NoteNetworkDto
 import ru.pyroman.masik.data.note.network.mapper.NoteBodyNetworkMapper
 import ru.pyroman.masik.data.note.network.mapper.NoteNetworkMapper
+import ru.pyroman.masik.data.note.network.mapper.NoteTagNetworkMapper
 import ru.pyroman.masik.domain.note.model.Note
 import java.time.LocalDateTime
 import java.util.*
@@ -20,6 +21,7 @@ class NoteRepository(
     private val noteNetworkMapper: NoteNetworkMapper,
     private val noteBodyNetworkMapper: NoteBodyNetworkMapper,
     private val noteTagRepository: NoteTagRepository,
+    private val noteTagNetworkMapper: NoteTagNetworkMapper,
 ) {
 
     fun findAll(): NoteListNetworkDto {
@@ -76,10 +78,12 @@ class NoteRepository(
     ): NoteNetworkDto {
         val oldCacheDto = requireNotNull(noteCacheRepository.findById(id).getOrNull())
         val oldModel = noteCacheMapper.map(oldCacheDto)
+        val newTags =  bodyNetworkDto.tags?.map(noteTagNetworkMapper::map)
         val mergedModel = oldModel.copy(
             body = oldModel.body.copy(
                 title = bodyNetworkDto.title ?: oldModel.body.title,
                 isDone = bodyNetworkDto.isDone ?: oldModel.body.isDone,
+                tags = newTags ?: oldModel.body.tags,
             )
         )
         val mergedCacheDto = noteCacheMapper.map(mergedModel)

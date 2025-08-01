@@ -14,7 +14,7 @@ class NoteBodyNetworkMapper(
         val isDone = dto?.isDone ?: false
         val tags = dto?.tags?.map { tag ->
             noteTagNetworkMapper.map(tag)
-        }?.toSet() ?: emptySet()
+        } ?: emptyList()
 
         return NoteBody(
             title = title,

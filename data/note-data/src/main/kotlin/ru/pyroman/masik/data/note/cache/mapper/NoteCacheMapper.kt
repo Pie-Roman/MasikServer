@@ -16,7 +16,7 @@ class NoteCacheMapper(
             .map { tag ->
                 tagCacheMapper.map(tag)
             }
-            .toSet()
+            .toList()
         val body = NoteBody(
             title = dto.title,
             isDone = dto.isDone,
@@ -35,7 +35,7 @@ class NoteCacheMapper(
             .map { tag ->
                 tagCacheMapper.map(tag)
             }
-            .toSet()
+            .toList()
 
         return NoteCacheDto(
             id = model.id,
