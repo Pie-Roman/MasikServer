@@ -2,6 +2,7 @@ package ru.pyroman.masik.feature.note.controller
 
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -14,15 +15,20 @@ import ru.pyroman.masik.data.note.repository.NoteTagRepository
 @RestController
 @RequestMapping("/notes/tags")
 class NoteTagController(
-    private val noteRepository: NoteTagRepository,
+    private val noteTagRepository: NoteTagRepository,
 ) {
+
+    @GetMapping
+    fun getAll(): List<NoteTagNetworkDto> {
+        return noteTagRepository.findAll()
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun createNoteTag(
         @RequestBody tag: NoteTagNetworkDto,
     ): NoteTagNetworkDto {
-        return noteRepository.create(tag)
+        return noteTagRepository.create(tag)
     }
 
     @DeleteMapping("/{name}")
@@ -30,8 +36,8 @@ class NoteTagController(
     fun deleteNoteTag(
         @PathVariable name: String
     ) {
-        if (!noteRepository.existsByName(name))
+        if (!noteTagRepository.existsByName(name))
             throw NoSuchElementException("NoteTag not found")
-        noteRepository.deleteByName(name)
+        noteTagRepository.deleteByName(name)
     }
 }
