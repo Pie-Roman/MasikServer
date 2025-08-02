@@ -35,7 +35,7 @@ class NoteCacheMapper(
             .map { tag ->
                 tagCacheMapper.map(tag)
             }
-            .toList()
+            .toMutableList()
 
         return NoteCacheDto(
             id = model.id,

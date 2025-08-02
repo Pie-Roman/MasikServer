@@ -34,5 +34,5 @@ data class NoteCacheDto(
         joinColumns = [JoinColumn(name = "note_id")],
         inverseJoinColumns = [JoinColumn(name = "tag_name")]
     )
-    val tags: List<NoteTagCacheDto> = emptyList()
+    val tags: MutableList<NoteTagCacheDto> = mutableListOf()
 )
