@@ -20,14 +20,21 @@ class NoteTagCacheMapper {
     }
 
     fun map(model: NoteTag): NoteTagCacheDto {
-        val id = model.id
         val name = model.name
         val color = model.color
+        val id = model.id
 
-        return NoteTagCacheDto(
-            id = id,
-            name = name,
-            color = color,
-        )
+        return if (id.isEmpty()) {
+            NoteTagCacheDto(
+                name = name,
+                color = color,
+            )
+        } else {
+            NoteTagCacheDto(
+                id = id,
+                name = name,
+                color = color,
+            )
+        }
     }
 }
