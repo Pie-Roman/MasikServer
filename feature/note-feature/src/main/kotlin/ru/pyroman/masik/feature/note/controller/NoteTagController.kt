@@ -32,24 +32,24 @@ class NoteTagController(
         return noteTagRepository.create(tag)
     }
 
-    @PatchMapping("/{name}")
+    @PatchMapping("/{id}")
     fun updateNoteTag(
-        @PathVariable name: String,
+        @PathVariable id: String,
         @RequestBody tag: NoteTagNetworkDto
     ): NoteTagNetworkDto {
         return noteTagRepository.update(
-            name = name,
+            id = id,
             tagNetworkDto = tag,
         )
     }
 
-    @DeleteMapping("/{name}")
+    @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun deleteNoteTag(
-        @PathVariable name: String
+        @PathVariable id: String
     ) {
-        if (!noteTagRepository.existsByName(name))
+        if (!noteTagRepository.existsById(id))
             throw NoSuchElementException("NoteTag not found")
-        noteTagRepository.deleteByName(name)
+        noteTagRepository.deleteById(id)
     }
 }

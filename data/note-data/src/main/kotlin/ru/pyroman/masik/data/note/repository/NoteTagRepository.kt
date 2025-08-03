@@ -30,21 +30,22 @@ class NoteTagRepository(
         return noteTagNetworkMapper.map(model)
     }
 
-    fun existsByName(name: String): Boolean {
-        return noteTagCacheRepository.existsById(name)
+    fun existsById(id: String): Boolean {
+        return noteTagCacheRepository.existsById(id)
     }
 
-    fun deleteByName(name: String) {
-        return noteTagCacheRepository.deleteById(name)
+    fun deleteById(id: String) {
+        return noteTagCacheRepository.deleteById(id)
     }
 
     fun update(
-        name: String,
+        id: String,
         tagNetworkDto: NoteTagNetworkDto
     ): NoteTagNetworkDto {
-        val oldCacheDto = requireNotNull(noteTagCacheRepository.findById(name).getOrNull())
+        val oldCacheDto = requireNotNull(noteTagCacheRepository.findById(id).getOrNull())
         val oldModel = noteTagCacheMapper.map(oldCacheDto)
         val mergedModel = oldModel.copy(
+            name = tagNetworkDto.name ?: oldModel.name,
             color = tagNetworkDto.color ?: oldModel.color
         )
         val mergedCacheDto = noteTagCacheMapper.map(mergedModel)

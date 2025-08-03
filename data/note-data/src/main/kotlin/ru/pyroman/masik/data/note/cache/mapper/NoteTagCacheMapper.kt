@@ -8,20 +8,24 @@ import ru.pyroman.masik.domain.note.model.NoteTag
 class NoteTagCacheMapper {
 
     fun map(dto: NoteTagCacheDto): NoteTag {
+        val id = dto.id
         val name = dto.name
         val color = dto.color
 
         return NoteTag(
+            id = id,
             name = name,
             color = color,
         )
     }
 
     fun map(model: NoteTag): NoteTagCacheDto {
+        val id = model.id
         val name = model.name
         val color = model.color
 
         return NoteTagCacheDto(
+            id = id,
             name = name,
             color = color,
         )
