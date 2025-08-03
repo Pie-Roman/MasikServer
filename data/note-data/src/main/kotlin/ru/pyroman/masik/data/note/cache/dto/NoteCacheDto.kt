@@ -32,7 +32,7 @@ data class NoteCacheDto(
     @JoinTable(
         name = "note_tags",
         joinColumns = [JoinColumn(name = "note_id")],
-        inverseJoinColumns = [JoinColumn(name = "tag_name")]
+        inverseJoinColumns = [JoinColumn(name = "tag_id")]
     )
     val tags: MutableList<NoteTagCacheDto> = mutableListOf()
 )

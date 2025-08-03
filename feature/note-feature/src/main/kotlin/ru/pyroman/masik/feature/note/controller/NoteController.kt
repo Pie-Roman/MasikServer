@@ -24,10 +24,10 @@ class NoteController(
 
     @GetMapping
     fun getAll(
-        @RequestParam(required = false) tagName: String?,
+        @RequestParam(required = false) tagId: String?,
     ): NoteListNetworkDto {
-        return if (tagName != null) {
-            noteRepository.findAllByTagName(tagName)
+        return if (tagId != null) {
+            noteRepository.findAllByTagId(tagId)
         } else {
             noteRepository.findAll()
         }

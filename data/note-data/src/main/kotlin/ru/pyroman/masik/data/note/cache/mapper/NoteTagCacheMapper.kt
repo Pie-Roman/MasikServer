@@ -20,9 +20,9 @@ class NoteTagCacheMapper {
     }
 
     fun map(model: NoteTag): NoteTagCacheDto {
+        val id = model.id
         val name = model.name
         val color = model.color
-        val id = model.id
 
         return if (id.isEmpty()) {
             NoteTagCacheDto(

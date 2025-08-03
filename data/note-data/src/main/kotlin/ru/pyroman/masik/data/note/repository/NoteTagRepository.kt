@@ -27,7 +27,8 @@ class NoteTagRepository(
         val model = noteTagNetworkMapper.map(networkDto)
         val cacheDto = noteTagCacheMapper.map(model)
         noteTagCacheRepository.save(cacheDto)
-        return noteTagNetworkMapper.map(model)
+        val newModel = noteTagCacheMapper.map(cacheDto)
+        return noteTagNetworkMapper.map(newModel)
     }
 
     fun existsById(id: String): Boolean {

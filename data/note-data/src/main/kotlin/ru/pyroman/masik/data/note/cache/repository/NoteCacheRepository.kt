@@ -7,6 +7,6 @@ import ru.pyroman.masik.data.note.cache.dto.NoteCacheDto
 
 interface NoteCacheRepository : JpaRepository<NoteCacheDto, String> {
 
-    @Query("SELECT n FROM NoteCacheDto n JOIN n.tags t WHERE t.name = :tagName")
-    fun findAllByTagName(@Param("tagName") tagName: String): List<NoteCacheDto>
+    @Query("SELECT n FROM NoteCacheDto n JOIN n.tags t WHERE t.id = :tagId")
+    fun findAllByTagId(@Param("tagId") tagId: String): List<NoteCacheDto>
 }

@@ -38,8 +38,8 @@ class NoteRepository(
         )
     }
 
-    fun findAllByTagName(tagName: String): NoteListNetworkDto {
-        val items = noteCacheRepository.findAllByTagName(tagName).map { dto ->
+    fun findAllByTagId(tagId: String): NoteListNetworkDto {
+        val items = noteCacheRepository.findAllByTagId(tagId).map { dto ->
             noteCacheMapper.map(dto)
         }
         val itemsNetworkDto = items.map { model ->
@@ -61,7 +61,8 @@ class NoteRepository(
 
         val cacheDto = noteCacheMapper.map(model)
         noteCacheRepository.save(cacheDto)
-        return noteNetworkMapper.map(model)
+        val newModel = noteCacheMapper.map(cacheDto)
+        return noteNetworkMapper.map(newModel)
     }
 
     fun existsById(id: String): Boolean {
