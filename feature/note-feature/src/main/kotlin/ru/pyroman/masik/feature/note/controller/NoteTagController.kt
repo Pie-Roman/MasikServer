@@ -3,6 +3,7 @@ package ru.pyroman.masik.feature.note.controller
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -29,6 +30,17 @@ class NoteTagController(
         @RequestBody tag: NoteTagNetworkDto,
     ): NoteTagNetworkDto {
         return noteTagRepository.create(tag)
+    }
+
+    @PatchMapping("/{name}")
+    fun updateNoteTag(
+        @PathVariable name: String,
+        @RequestBody tag: NoteTagNetworkDto
+    ): NoteTagNetworkDto {
+        return noteTagRepository.update(
+            name = name,
+            tagNetworkDto = tag,
+        )
     }
 
     @DeleteMapping("/{name}")
