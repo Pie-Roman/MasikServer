@@ -45,9 +45,10 @@ class NoteRepository(
         val itemsNetworkDto = items.map { model ->
             noteNetworkMapper.map(model)
         }
+        val tags = noteTagRepository.findAll()
         return NoteListNetworkDto(
             items = itemsNetworkDto,
-            tags = null,
+            tags = tags,
         )
     }
 
