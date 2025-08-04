@@ -27,7 +27,7 @@ class NoteRepository(
     fun findAll(): NoteListNetworkDto {
         val items = noteCacheRepository.findAll().map { dto ->
             noteCacheMapper.map(dto)
-        }
+        }.sortedByDescending { it.dateCreated }
         val itemsNetworkDto = items.map { model ->
             noteNetworkMapper.map(model)
         }
@@ -41,7 +41,7 @@ class NoteRepository(
     fun findAllByTagId(tagId: String): NoteListNetworkDto {
         val items = noteCacheRepository.findAllByTagId(tagId).map { dto ->
             noteCacheMapper.map(dto)
-        }
+        }.sortedByDescending { it.dateCreated }
         val itemsNetworkDto = items.map { model ->
             noteNetworkMapper.map(model)
         }
