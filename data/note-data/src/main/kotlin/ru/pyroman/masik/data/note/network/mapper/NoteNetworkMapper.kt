@@ -3,6 +3,7 @@ package ru.pyroman.masik.data.note.network.mapper
 import org.springframework.stereotype.Component
 import ru.pyroman.masik.data.note.network.dto.NoteNetworkDto
 import ru.pyroman.masik.domain.note.model.Note
+import java.time.LocalDateTime
 
 @Component
 class NoteNetworkMapper(
@@ -20,7 +21,7 @@ class NoteNetworkMapper(
 
     fun map(dto: NoteNetworkDto): Note? {
         val id = dto.id ?: return null
-        val dateCreated = dto.dateCreated ?: return null
+        val dateCreated = dto.dateCreated ?: LocalDateTime.now()
         val body = noteBodyNetworkMapper.map(dto.body)
         return Note(
             id = id,
