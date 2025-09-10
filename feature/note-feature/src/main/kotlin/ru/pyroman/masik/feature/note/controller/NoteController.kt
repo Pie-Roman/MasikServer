@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import ru.pyroman.masik.data.note.network.dto.NoteBodyNetworkDto
+import ru.pyroman.masik.data.note.network.dto.NoteListLaunchNetworkDto
 import ru.pyroman.masik.data.note.network.dto.NoteListNetworkDto
 import ru.pyroman.masik.data.note.network.dto.NoteNetworkDto
 import ru.pyroman.masik.data.note.repository.NoteRepository
@@ -31,6 +32,13 @@ class NoteController(
         } else {
             noteRepository.findAll()
         }
+    }
+
+    @PostMapping("/launch")
+    fun launch(
+        @RequestBody launchDto: NoteListLaunchNetworkDto
+    ) {
+        noteRepository.launch(launchDto)
     }
 
     @PostMapping

@@ -4,6 +4,7 @@ import org.springframework.stereotype.Repository
 import ru.pyroman.masik.data.note.cache.mapper.NoteCacheMapper
 import ru.pyroman.masik.data.note.cache.repository.NoteCacheRepository
 import ru.pyroman.masik.data.note.network.dto.NoteBodyNetworkDto
+import ru.pyroman.masik.data.note.network.dto.NoteListLaunchNetworkDto
 import ru.pyroman.masik.data.note.network.dto.NoteListNetworkDto
 import ru.pyroman.masik.data.note.network.dto.NoteNetworkDto
 import ru.pyroman.masik.data.note.network.mapper.NoteBodyNetworkMapper
@@ -23,6 +24,19 @@ class NoteRepository(
     private val noteTagRepository: NoteTagRepository,
     private val noteTagNetworkMapper: NoteTagNetworkMapper,
 ) {
+
+    fun launch(launchNetworkDto: NoteListLaunchNetworkDto) {
+        val systemNotesDto = launchNetworkDto.systemNotes.orEmpty()
+
+        for (systemNoteDto in systemNotesDto) {
+            val id = systemNoteDto.id
+            if (id != null && existsById(id)) {
+                update(id, systemNoteDto.body)
+            } else {
+                create(systemNoteDto)
+            }
+        }
+    }
 
     fun findAll(): NoteListNetworkDto {
         val items = noteCacheRepository.findAll().map { dto ->
@@ -52,7 +66,7 @@ class NoteRepository(
         )
     }
 
-    fun create(bodyNetworkDto: NoteBodyNetworkDto): NoteNetworkDto {
+    fun create(bodyNetworkDto: NoteBodyNetworkDto?): NoteNetworkDto {
         val bodyModel = noteBodyNetworkMapper.map(bodyNetworkDto)
         val model = Note(
             id = UUID.randomUUID().toString(),
@@ -66,6 +80,14 @@ class NoteRepository(
         return noteNetworkMapper.map(newModel)
     }
 
+    fun create(networkDto: NoteNetworkDto): NoteNetworkDto {
+        val model = noteNetworkMapper.map(networkDto) ?: return create(networkDto.body)
+
+        val cacheDto = noteCacheMapper.map(model)
+        noteCacheRepository.save(cacheDto)
+        return noteNetworkMapper.map(model)
+    }
+
     fun existsById(id: String): Boolean {
         return noteCacheRepository.existsById(id)
     }
@@ -76,15 +98,15 @@ class NoteRepository(
 
     fun update(
         id: String,
-        bodyNetworkDto: NoteBodyNetworkDto
+        bodyNetworkDto: NoteBodyNetworkDto?
     ): NoteNetworkDto {
         val oldCacheDto = requireNotNull(noteCacheRepository.findById(id).getOrNull())
         val oldModel = noteCacheMapper.map(oldCacheDto)
-        val newTags =  bodyNetworkDto.tags?.map(noteTagNetworkMapper::map)
+        val newTags =  bodyNetworkDto?.tags?.map(noteTagNetworkMapper::map)
         val mergedModel = oldModel.copy(
             body = oldModel.body.copy(
-                title = bodyNetworkDto.title ?: oldModel.body.title,
-                isDone = bodyNetworkDto.isDone ?: oldModel.body.isDone,
+                title = bodyNetworkDto?.title ?: oldModel.body.title,
+                isDone = bodyNetworkDto?.isDone ?: oldModel.body.isDone,
                 tags = newTags ?: oldModel.body.tags,
             )
         )

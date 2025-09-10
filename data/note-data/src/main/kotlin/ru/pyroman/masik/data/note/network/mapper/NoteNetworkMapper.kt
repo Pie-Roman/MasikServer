@@ -17,4 +17,15 @@ class NoteNetworkMapper(
             dateCreated = model.dateCreated,
         )
     }
+
+    fun map(dto: NoteNetworkDto): Note? {
+        val id = dto.id ?: return null
+        val dateCreated = dto.dateCreated ?: return null
+        val body = noteBodyNetworkMapper.map(dto.body)
+        return Note(
+            id = id,
+            body = body,
+            dateCreated = dateCreated,
+        )
+    }
 }
